@@ -160,6 +160,38 @@ def on_closing():
         login_window.destroy()
         exit()  # Exit the program when the window is closed
 
+
+# Function to handle creating a new user profile
+def create_user_profile():
+    def save_new_user_profile():
+        new_username = new_username_entry.get()
+        new_password = new_password_entry.get()
+
+        if new_username and new_password:
+            user_profiles[new_username] = {'password': new_password, 'trips': []}
+            save_user_profiles()
+            messagebox.showinfo("Profile Created", "User profile created successfully!")
+            new_user_window.destroy()
+        else:
+            messagebox.showerror("Error", "Username and password are required!")
+
+    new_user_window = tk.Toplevel()
+    new_user_window.title("Create User Profile")
+
+    new_username_label = tk.Label(new_user_window, text="Enter Username:")
+    new_username_label.pack()
+    new_username_entry = tk.Entry(new_user_window)
+    new_username_entry.pack()
+
+    new_password_label = tk.Label(new_user_window, text="Enter Password:")
+    new_password_label.pack()
+    new_password_entry = tk.Entry(new_user_window, show="*")  # Show * for password input
+    new_password_entry.pack()
+
+    save_button = tk.Button(new_user_window, text="Save", command=save_new_user_profile)
+    save_button.pack()
+
+
 # Create Tkinter window for login
 login_window = tk.Tk()
 login_window.geometry("300x200")
@@ -187,6 +219,10 @@ login_button = tk.Button(login_window, text="Login", command=validate_login)
 login_button.pack()
 
 login_window.protocol("WM_DELETE_WINDOW", on_closing)
+
+# Add a button for creating a new user profile
+create_profile_button = tk.Button(login_window, text="Create User Profile", command=create_user_profile)
+create_profile_button.pack()
 
 # Start the GUI main loop for login window
 login_window.mainloop()
