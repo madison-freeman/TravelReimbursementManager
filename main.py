@@ -119,6 +119,37 @@ def validate_login():
     if username in user_profiles and user_profiles[username]["password"] == password:
         logged_in_user = username
         messagebox.showinfo("Login", "Login Successful!")
+
+        # Check if it's the user's first login
+        if 'base_city' not in user_profiles[username]:
+            first_login = messagebox.askyesno("First Login", "Is this your first time logging in?")
+            if first_login:
+                base_city_window = tk.Toplevel()
+                base_city_window.title("Set Base City")
+
+                base_city_label = tk.Label(base_city_window, text="Select your base city:")
+                base_city_label.pack()
+
+                # Create a dropdown menu for base city selection
+                base_city_var = tk.StringVar(base_city_window)
+                base_city_var.set("Tallahassee")  # Set default base city
+                cities = ["Tallahassee", "Crawfordville", "Quincy", "Apalachicola", "Bristol"]
+                base_city_menu = tk.OptionMenu(base_city_window, base_city_var, *cities)
+                base_city_menu.pack()
+
+                # Function to save the selected base city and close the window
+                def save_base_city():
+                    selected_base_city = base_city_var.get()
+                    user_profiles[logged_in_user]['base_city'] = selected_base_city
+                    save_user_profiles()
+                    messagebox.showinfo("Base City", f"Base city set to {selected_base_city}")
+                    base_city_window.destroy()
+                    login_window.destroy()
+
+                save_button = tk.Button(base_city_window, text="Save", command=save_base_city)
+                save_button.pack()
+                return
+
         login_window.destroy()  # Close the login window after successful login
     else:
         messagebox.showerror("Login", "Invalid username or password")
