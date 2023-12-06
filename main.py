@@ -338,16 +338,17 @@ def generate_pdf_report():
     c.drawString(100, y - 50, total_reimbursement_str)
 
     # Add images at the end of the report for unique city pairs
-    added_maps = set()  # Maintain a set to track added maps
+    added_city_pairs = set()  # Maintain a set to track added city pairs
 
     c.showPage()  # Add a new page
     for idx, (start, end) in enumerate(unique_city_pairs, start=1):
-        path = f"{start}to{end}.png"
+        city_pair = frozenset([start, end])
 
-        # Check if the map has already been added to avoid duplicates
-        if path not in added_maps:
+        # Check if the city pair or its reverse has already been added to avoid duplicates
+        if city_pair not in added_city_pairs:
+            path = f"{start}to{end}.png"
             c.drawImage(path, 30, 650 - (idx * 100), width=400, height=100)
-            added_maps.add(path)  # Add the path to the set of added maps
+            added_city_pairs.add(city_pair)  # Add the city pair to the set of added city pairs
 
     c.save()
     messagebox.showinfo("Report Generated", f"PDF report generated: {filename}")
