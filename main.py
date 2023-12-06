@@ -335,7 +335,7 @@ def generate_report():
     # Add images at the end of the report for unique city pairs
     c.showPage()  # Add a new page
     for idx, (start, end) in enumerate(unique_city_pairs, start=1):
-        path = f"{start}to{end}.png"
+        path = f"Maps/{start}to{end}.png"
         c.drawImage(path, 30, 650 - (idx * 100), width=400, height=100)
 
     c.save()
@@ -413,7 +413,7 @@ def generate_pdf_report():
 
         # Check if the city pair or its reverse has already been added to avoid duplicates
         if city_pair not in added_city_pairs:
-            path = f"{start}to{end}.png"
+            path = f"Maps/{start}to{end}.png"
             c.drawImage(path, 30, 650 - (idx * 100), width=400, height=100)
             added_city_pairs.add(city_pair)  # Add the city pair to the set of added city pairs
 
@@ -429,7 +429,6 @@ def generate_pdf_report():
     # Terminate the program
     exit()
 
-# Function to handle GUI form submission
 # Function to handle GUI form submission
 def submit_form():
     departure = departure_var.get()
