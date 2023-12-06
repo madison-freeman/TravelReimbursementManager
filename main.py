@@ -302,7 +302,7 @@ def record_trip(departure, destination, miles, reason, custom_reason=""):
 
 def generate_report():
     current_month = datetime.now().strftime("%Y-%m")
-    filename = f"travel_report_{current_month}.pdf"
+    filename = f"{logged_in_user}_travel_report_{current_month}.pdf"
     c = canvas.Canvas(filename, pagesize=letter)
 
     # Add the government seal image
@@ -363,7 +363,7 @@ def generate_pdf_report():
     total_reimbursement = calculate_reimbursement(total_miles)
 
     current_month = datetime.now().strftime("%Y-%m")
-    filename = f"travel_report_{current_month}.pdf"
+    filename = f"{logged_in_user}_travel_report_{current_month}.pdf"
     max_lines_per_page = 12
     c = canvas.Canvas(filename, pagesize=letter)
 
