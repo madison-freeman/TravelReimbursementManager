@@ -134,6 +134,13 @@ login_window = tk.Tk()
 login_window.geometry("300x200")
 login_window.title("Login")
 
+# Function to handle hitting 'Enter' for login
+def enter_pressed(event):
+    validate_login()
+
+# Binding the 'Return' key to the validate_login function
+login_window.bind('<Return>', enter_pressed)
+
 # Create labels and entry fields for login
 username_label = tk.Label(login_window, text="Username:")
 username_label.pack()
