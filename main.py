@@ -17,12 +17,20 @@ class DateTimeEncoder(JSONEncoder):
 mileage_data = {
     ("Tallahassee", "Crawfordville"): 20,
     ("Crawfordville", "Tallahassee"): 20,
-    ("Tallahassee", "Quincy"): 23,
-    ("Quincy", "Tallahassee"): 23,
+    ("Tallahassee", "Quincy"): 19,
+    ("Quincy", "Tallahassee"): 19,
+    ("Crawfordville", "Apalachicola"): 57,
+    ("Apalachicola", "Crawfordville"): 57,
+    ("Crawfordville", "Monticello"): 46,
+    ("Monticello", "Crawfordville"): 46,
+    ("Tallahassee", "Monticello"): 26,
+    ("Monticello", "Tallahassee"): 26,
     ("Tallahassee", "Apalachicola"): 77,
     ("Apalachicola", "Tallahassee"): 77,
     ("Tallahassee", "Bristol"): 44,
-    ("Bristol", "Tallahassee"): 44
+    ("Bristol", "Tallahassee"): 44,
+    ("Crawfordville", "Bristol"): 46,
+    ("Bristol", "Crawfordville"): 46
 }
 
 reasons = {
@@ -34,7 +42,7 @@ reasons = {
     6: "Other"
 }
 
-reimbursement_rate = 0.655  # cents per mile
+reimbursement_rate = 0.67  # cents per mile
 total_miles = 0
 trips = []
 unique_city_pairs = set()
@@ -100,9 +108,9 @@ def load_program_state():
     try:
         with open(f"{logged_in_user}_program_state.json", 'r') as file:
             program_state = json.load(file)
-            total_miles = program_state['total_miles']
-            trips = program_state['trips']
-            unique_city_pairs = set(program_state['unique_city_pairs'])
+            total_miles = program_state.get('total_miles', 0)
+            trips = program_state.get('trips', [])
+            unique_city_pairs = set(program_state.get('unique_city_pairs', []))
     except FileNotFoundError:
         pass  # Continue with default values if the file is not found
 
@@ -285,6 +293,11 @@ def record_trip(departure, destination, miles, reason, custom_reason=""):
        (departure == "Crawfordville" and destination == base_city):
         return
 
+    # Check if the trip or its reverse is already recorded
+    if (departure, destination) in unique_city_pairs or \
+       (destination, departure) in unique_city_pairs:
+        return
+
     if reason == 6:  # If "Other" is selected, use the custom reason provided
         reason_text = custom_reason[:40]  # Limit the length of the reason text
     else:
@@ -293,9 +306,9 @@ def record_trip(departure, destination, miles, reason, custom_reason=""):
     total_miles += miles
     trips.append((datetime.now(), departure, destination, miles, reason_text))
 
-    # Check if the reversed direction of the trip is already recorded
-    if (destination, departure) not in unique_city_pairs:
-        unique_city_pairs.add((departure, destination))
+    # Add the trip and its reverse to the unique city pairs set
+    unique_city_pairs.add((departure, destination))
+    unique_city_pairs.add((destination, departure))
 
     # Save program state after each trip recording
     save_program_state()
