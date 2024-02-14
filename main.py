@@ -34,11 +34,11 @@ mileage_data = {
 }
 
 reasons = {
-    1: "Support of State/Circuit Equipment",
+    1: "Support of Equipment",
     2: "Return",
     3: "Mandatory Meeting",
     4: "Pick Up Parts",
-    5: "Delivering Parts & Equipment",
+    5: "Delivering Equipment",
     6: "Other"
 }
 
@@ -349,7 +349,7 @@ def generate_report():
     c.showPage()  # Add a new page
     for idx, (start, end) in enumerate(unique_city_pairs, start=1):
         path = f"Maps/{start}to{end}.png"
-        c.drawImage(path, 30, 650 - (idx * 100), width=400, height=100)
+        c.drawImage(path, 30, 650 - (idx * 100), width=550, height=180)
 
     c.save()
 
@@ -390,44 +390,48 @@ def generate_pdf_report():
 
     # Write header for the table
     c.setFont("Courier-Bold", 8)
-    c.drawString(80, 630, "Date")
-    c.drawString(150, 630, "Hour of Departure")
-    c.drawString(150, 620, "and Hour of Return")
-    c.drawString(260, 630, "Travel Performed from")
-    c.drawString(260, 620, "Point of Origin")
-    c.drawString(260, 610, "To Destination")
-    c.drawString(390, 630, "Purpose or")
-    c.drawString(390, 620, "Reason")
-    c.drawString(460, 630, "Map Mileage")
-    c.drawString(460, 620, "Claimed")
+    c.drawString(60, 630, "Date")
+    c.drawString(100, 630, "Time")
+    c.drawString(170, 630, "Travel from")
+    c.drawString(170, 620, "Point of Origin")
+    c.drawString(170, 610, "to Destination")
+    c.drawString(280, 630, "Purpose or")
+    c.drawString(280, 620, "Reason")
+    c.drawString(410, 630, "Map")
+    c.drawString(410, 620, "Mileage")
+    c.drawString(410, 610, "Claimed")
+    c.drawString(460, 630, "Vicinity")
+    c.drawString(460, 620, "Mileage")
+    c.drawString(460, 610, "Claimed")
 
     # Write trips and mileage information
     c.setFont("Courier", 6)
     y = 585
     for trip in trips:
         timestamp, departure, destination, miles, reason = trip
-        formatted_date = timestamp.strftime("%m-%d-%Y")
+        formatted_date = timestamp.strftime("%m-%d-%y")
         formatted_time = timestamp.strftime("%H:%M")# Format timestamp to show only hours and minutes
         if miles != 20:  # Check if the trip isn't Tallahassee to Crawfordville
-            c.drawString(80, y, formatted_date)
-            c.drawString(150, y, formatted_time)
-            c.drawString(260, y, f"{departure} to {destination}")
-            c.drawString(390, y, reason)
-            c.drawString(460, y, f"{miles}")
+            c.drawString(60, y, formatted_date)
+            c.drawString(100, y, formatted_time)
+            c.drawString(170, y, f"{departure} to {destination}")
+            c.drawString(280, y, reason)
+            c.drawString(410, y, f"{miles}")
             c.drawString(750, y, f"{timestamp.hour} - {timestamp.hour + 1}")
         else:
-            c.drawString(100, y, formatted_date)
-            c.drawString(170, y, formatted_time)
-            c.drawString(200, y, f"{departure} to {destination} (unpaid) - {miles}")
-            c.drawString(350, y, reason)
-            c.drawString(460, y, f"{miles}")
+            c.drawString(60, y, formatted_date)
+            c.drawString(100, y, formatted_time)
+            c.drawString(170, y, f"{departure} to {destination} (unpaid) - {miles}")
+            c.drawString(280, y, reason)
+            c.drawString(410, y, f"{miles}")
             c.drawString(750, y, f"{timestamp.hour} - {timestamp.hour + 1}")
         y -= 20  # Increase the gap between rows
 
     # Calculate and write reimbursement information
     total_reimbursement_str = f"Total reimbursement amount: ${total_reimbursement:.2f}"
-    c.drawString(80, y - 30, f"Total miles traveled this month: {total_miles}")
-    c.drawString(80, y - 50, total_reimbursement_str)
+    c.drawString(60, y - 30, f"Total miles paid at: $0.67")
+    c.drawString(60, y - 40, f"Total miles traveled this month: {total_miles}")
+    c.drawString(60, y - 50, total_reimbursement_str)
 
     # Add images at the end of the report for unique city pairs
     added_city_pairs = set()  # Maintain a set to track added city pairs
@@ -569,6 +573,8 @@ while not data_collection_complete:
 total_reimbursement = calculate_reimbursement(total_miles)
 
 print(f"Total miles traveled this month: {total_miles}")
+print(f"Total miles paid at: $0.67")
+
 print(f"Total reimbursement amount: ${total_reimbursement:.2f}")
 
 generate_pdf_report()  # Generate PDF report with all recorded trips
