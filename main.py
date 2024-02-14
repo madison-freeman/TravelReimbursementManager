@@ -388,34 +388,46 @@ def generate_pdf_report():
     c.drawString(150, 700, "Wakulla County Voucher for Reimbursement")
     c.drawString(150, 670, "of Travel Expenses")
 
+    # Write header for the table
+    c.setFont("Courier-Bold", 8)
+    c.drawString(80, 630, "Date")
+    c.drawString(150, 630, "Hour of Departure")
+    c.drawString(150, 620, "and Hour of Return")
+    c.drawString(260, 630, "Travel Performed from")
+    c.drawString(260, 620, "Point of Origin")
+    c.drawString(260, 610, "To Destination")
+    c.drawString(390, 630, "Purpose or")
+    c.drawString(390, 620, "Reason")
+    c.drawString(460, 630, "Map Mileage")
+    c.drawString(460, 620, "Claimed")
+
     # Write trips and mileage information
-    c.setFont("Courier", 12)
-    line_count = 0
-    y = 580
+    c.setFont("Courier", 6)
+    y = 585
     for trip in trips:
         timestamp, departure, destination, miles, reason = trip
-        formatted_time = timestamp.strftime("%Y-%m-%d %H:%M")  # Format timestamp to show only hours and minutes
+        formatted_date = timestamp.strftime("%m-%d-%Y")
+        formatted_time = timestamp.strftime("%H:%M")# Format timestamp to show only hours and minutes
         if miles != 20:  # Check if the trip isn't Tallahassee to Crawfordville
-            c.drawString(100, y, f"{formatted_time}: {departure} to {destination} - {miles} miles")
-            c.drawString(100, y - 15, f"Reason: {reason}")  # Place reason below trip details
+            c.drawString(80, y, formatted_date)
+            c.drawString(150, y, formatted_time)
+            c.drawString(260, y, f"{departure} to {destination}")
+            c.drawString(390, y, reason)
+            c.drawString(460, y, f"{miles}")
+            c.drawString(750, y, f"{timestamp.hour} - {timestamp.hour + 1}")
         else:
-            c.drawString(100, y, f"{formatted_time}: {departure} to {destination} (unpaid) - {miles}")
-            c.drawString(100, y - 15, f"Reason: {reason}")  # Place reason below trip details
-        y -= 40  # increase the gap between trips
-
-        line_count += 1
-        if line_count >= max_lines_per_page:
-            # If remaining space is not enough for another trip, create a new page
-            c.showPage()
-            # Reset line_count and y-coordinate for the new page
-            c.setFont("Courier", 12)
-            line_count = 0
-            y = 750  # Set to a suitable starting position on the new page
+            c.drawString(100, y, formatted_date)
+            c.drawString(170, y, formatted_time)
+            c.drawString(200, y, f"{departure} to {destination} (unpaid) - {miles}")
+            c.drawString(350, y, reason)
+            c.drawString(460, y, f"{miles}")
+            c.drawString(750, y, f"{timestamp.hour} - {timestamp.hour + 1}")
+        y -= 20  # Increase the gap between rows
 
     # Calculate and write reimbursement information
     total_reimbursement_str = f"Total reimbursement amount: ${total_reimbursement:.2f}"
-    c.drawString(100, y - 30, f"Total miles traveled this month: {total_miles}")
-    c.drawString(100, y - 50, total_reimbursement_str)
+    c.drawString(80, y - 30, f"Total miles traveled this month: {total_miles}")
+    c.drawString(80, y - 50, total_reimbursement_str)
 
     # Add images at the end of the report for unique city pairs
     added_city_pairs = set()  # Maintain a set to track added city pairs
@@ -427,7 +439,7 @@ def generate_pdf_report():
         # Check if the city pair or its reverse has already been added to avoid duplicates
         if city_pair not in added_city_pairs:
             path = f"Maps/{start}to{end}.png"
-            c.drawImage(path, 30, 650 - (idx * 100), width=400, height=100)
+            c.drawImage(path, 30, 650 - (idx * 100), width=550, height=180)
             added_city_pairs.add(city_pair)  # Add the city pair to the set of added city pairs
 
     c.save()
