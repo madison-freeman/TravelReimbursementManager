@@ -6,6 +6,7 @@ from json import JSONEncoder
 import tkinter as tk
 from tkinter import messagebox
 import subprocess
+from tkinter import simpledialog
 
 class DateTimeEncoder(JSONEncoder):
     def default(self, o):
@@ -149,10 +150,62 @@ def validate_login():
                 def save_base_city():
                     selected_base_city = base_city_var.get()
                     user_profiles[logged_in_user]['base_city'] = selected_base_city
+
+                    # Retrieve user information
+                    tar_number = tar_number_entry.get()
+                    employee_id = employee_id_entry.get()
+                    traveler_name = traveler_name_entry.get()
+                    agency = agency_entry.get()
+                    headquarters = headquarters_entry.get()
+                    account_number = account_number_entry.get()
+                    base_city = base_city_var.get()
+
+                    # Store user information in user_profiles
+                    user_profiles[logged_in_user]['user_info'] = {
+                        'TAR': tar_number,
+                        'Employee ID / SSN': employee_id,
+                        'Traveler Name': traveler_name,
+                        'Agency': agency,
+                        'Headquarters': headquarters,
+                        'City of Residence': base_city,
+                        'Account Number': account_number
+                    }
+
                     save_user_profiles()
                     messagebox.showinfo("Base City", f"Base city set to {selected_base_city}")
                     base_city_window.destroy()
                     login_window.destroy()
+
+                # Add labels and entry fields for user information
+                tar_number_label = tk.Label(base_city_window, text="TAR #:")
+                tar_number_label.pack()
+                tar_number_entry = tk.Entry(base_city_window)
+                tar_number_entry.pack()
+
+                employee_id_label = tk.Label(base_city_window, text="Employee ID / SSN: ")
+                employee_id_label.pack()
+                employee_id_entry = tk.Entry(base_city_window)
+                employee_id_entry.pack()
+
+                traveler_name_label = tk.Label(base_city_window, text="Traveler Name: ")
+                traveler_name_label.pack()
+                traveler_name_entry = tk.Entry(base_city_window)
+                traveler_name_entry.pack()
+
+                agency_label = tk.Label(base_city_window, text="Agency: ")
+                agency_label.pack()
+                agency_entry = tk.Entry(base_city_window)
+                agency_entry.pack()
+
+                headquarters_label = tk.Label(base_city_window, text="Headquarters: ")
+                headquarters_label.pack()
+                headquarters_entry = tk.Entry(base_city_window)
+                headquarters_entry.pack()
+
+                account_number_label = tk.Label(base_city_window, text="Account Number: ")
+                account_number_label.pack()
+                account_number_entry = tk.Entry(base_city_window)
+                account_number_entry.pack()
 
                 save_button = tk.Button(base_city_window, text="Save", command=save_base_city)
                 save_button.pack()
@@ -240,7 +293,7 @@ if not logged_in_user:
     exit()  # Exit the program if login fails
 
 # Function to record trip for a user
-def record_user_trip(username, departure, destination, miles, reason):
+def record_user_trip(username, departure, destination, miles, reason, statement=""):
     global total_miles
     global trips
     global unique_city_pairs
@@ -269,7 +322,8 @@ def record_user_trip(username, departure, destination, miles, reason):
         "departure": departure,
         "destination": destination,
         "miles": miles,
-        "reason": reason_text
+        "reason": reason_text,
+        "statement": statement
     })
 
     # Update user profile
@@ -283,7 +337,7 @@ def calculate_reimbursement(miles):
 base_city = "Tallahassee"
 
 # Function to record trips, considering base city and Crawfordville exclusion
-def record_trip(departure, destination, miles, reason, custom_reason=""):
+def record_trip(departure, destination, miles, reason, custom_reason="", statement=""):
     global total_miles
     global trips
     global unique_city_pairs
@@ -313,7 +367,7 @@ def record_trip(departure, destination, miles, reason, custom_reason=""):
     # Save program state after each trip recording
     save_program_state()
 
-def generate_report():
+def generate_report(statement=""):
     current_month = datetime.now().strftime("%Y-%m")
     filename = f"{logged_in_user}_travel_report_{current_month}.pdf"
     c = canvas.Canvas(filename, pagesize=letter)
@@ -331,7 +385,7 @@ def generate_report():
     y = 580
     for trip in trips:
         timestamp, departure, destination, miles, reason = trip
-        formatted_time = timestamp.strftime("%Y-%m-%d %H:%M")  # Format timestamp to show only hours and minutes
+        formatted_time = timestamp.strftime("%I:%M %p")  # Format timestamp to show 12-hour clock with AM/PM
         if miles != 20:  # Check if the trip isn't Tallahassee to Crawfordville
             c.drawString(100, y, f"{formatted_time}: {departure} to {destination} - {miles} miles")
             c.drawString(100, y - 15, f"Reason: {reason}")  # Place reason below trip details
@@ -345,15 +399,19 @@ def generate_report():
     c.drawString(100, y - 30, f"Total miles traveled this month: {total_miles}")
     c.drawString(100, y - 50, total_reimbursement_str)
 
+    # Print the statement of benefits
+    if statement:
+        c.drawString(100, y - 60, f"Statement of Benefits to the State: {statement}")
+
     # Add images at the end of the report for unique city pairs
     c.showPage()  # Add a new page
     for idx, (start, end) in enumerate(unique_city_pairs, start=1):
         path = f"Maps/{start}to{end}.png"
-        c.drawImage(path, 30, 650 - (idx * 100), width=550, height=180)
+        c.drawImage(path, 30, 700 - (idx * 150), width=550, height=180)
 
     c.save()
 
-def generate_pdf_report():
+def generate_pdf_report(statement=""):
     # Load the entire history of trips from Madison_program_state.json
     try:
         with open(f"{logged_in_user}_program_state.json", 'r') as file:
@@ -377,61 +435,112 @@ def generate_pdf_report():
 
     current_month = datetime.now().strftime("%Y-%m")
     filename = f"{logged_in_user}_travel_report_{current_month}.pdf"
-    max_lines_per_page = 12
+    max_lines_per_page = 30
     c = canvas.Canvas(filename, pagesize=letter)
 
     # Add the government seal image
     c.drawImage("2ndJudC_logo.jpg", 30, 650, width=100, height=100)
 
     # Add text for reimbursement request
-    c.setFont("Courier", 16)
-    c.drawString(150, 700, "Wakulla County Voucher for Reimbursement")
-    c.drawString(150, 670, "of Travel Expenses")
+    c.setFont("Courier", 12)
+    c.drawString(150, 740, "Wakulla County Voucher for Reimbursement")
+    c.drawString(150, 720, "of Travel Expenses")
+
+    # Add user information at the top of the report
+    c.setFont("Courier", 8)
+    user_info = user_profiles.get(logged_in_user, {}).get('user_info', {})
+    y_offset = 700
+    for key, value in user_info.items():
+        # Set color for the key (dark red)
+        c.setFillColorRGB(0.5, 0, 0)  # Dark red color
+        c.drawString(150, y_offset, f"{key}: ")
+        # Set color for the value (black)
+        c.setFillColorRGB(0, 0, 0)  # Black color
+        c.drawString(270, y_offset, f"{value}")
+        y_offset -= 10 # Adjust spacing between lines
+
+    # Draw a long solid line to separate user_info from columns
+    c.setStrokeColorRGB(0, 0, 0)  # Set stroke color to black
+    c.setLineWidth(1)  # Set line width to 1 point
+    c.line(30, 632, 575, 632)  # Draw a line from (50, 625) to (550, 625)
 
     # Write header for the table
     c.setFont("Courier-Bold", 8)
-    c.drawString(60, 630, "Date")
-    c.drawString(100, 630, "Time")
-    c.drawString(170, 630, "Travel from")
-    c.drawString(170, 620, "Point of Origin")
-    c.drawString(170, 610, "to Destination")
-    c.drawString(280, 630, "Purpose or")
-    c.drawString(280, 620, "Reason")
-    c.drawString(410, 630, "Map")
-    c.drawString(410, 620, "Mileage")
-    c.drawString(410, 610, "Claimed")
-    c.drawString(460, 630, "Vicinity")
-    c.drawString(460, 620, "Mileage")
-    c.drawString(460, 610, "Claimed")
+    # Date column
+    c.drawString(40, 620, "Date")
+    # Hour of Departure and Hour of Arrival column
+    c.drawString(80, 620, "Time")
+    # Travel Departure and Arrival column
+    c.drawString(130, 620, "Travel from")
+    c.drawString(130, 610, "Point of Origin")
+    c.drawString(130, 600, "to Destination")
+    # Purpose or Reason of travel column
+    c.drawString(240, 620, "Purpose or")
+    c.drawString(240, 610, "Reason")
+    # Map/Vicinity Mileage Claimed column
+    c.drawString(330, 620, "Vicinity")
+    c.drawString(330, 610, "Mileage")
+    c.drawString(330, 600, "Claimed")
+    # Meals for Class A&B Travel expenses column
+    c.drawString(400, 620, "Meals for")
+    c.drawString(400, 610, "Class")
+    c.drawString(400, 600, "A&B Travel")
+    # Per Diem Lodging expenses column
+    c.drawString(460, 620, "Per Diem")
+    c.drawString(460, 610, "Lodging")
+    c.drawString(460, 600, "Expenses")
+    # Other expenses column
+    c.drawString(520, 620, "Other")
+    c.drawString(520, 610, "Expenses")
 
     # Write trips and mileage information
     c.setFont("Courier", 6)
-    y = 585
+    y = 580
     for trip in trips:
         timestamp, departure, destination, miles, reason = trip
         formatted_date = timestamp.strftime("%m-%d-%y")
-        formatted_time = timestamp.strftime("%H:%M")# Format timestamp to show only hours and minutes
+        formatted_time = timestamp.strftime("%I:%M %p")  # Format timestamp to show 12-hour clock with AM/PM
         if miles != 20:  # Check if the trip isn't Tallahassee to Crawfordville
-            c.drawString(60, y, formatted_date)
-            c.drawString(100, y, formatted_time)
-            c.drawString(170, y, f"{departure} to {destination}")
-            c.drawString(280, y, reason)
-            c.drawString(410, y, f"{miles}")
+            c.drawString(40, y, formatted_date)
+            c.drawString(80, y, formatted_time)
+            c.drawString(130, y, f"{departure} to {destination}")
+            c.drawString(240, y, reason)
+            c.drawString(330, y, f"{miles}")
             c.drawString(750, y, f"{timestamp.hour} - {timestamp.hour + 1}")
         else:
-            c.drawString(60, y, formatted_date)
-            c.drawString(100, y, formatted_time)
-            c.drawString(170, y, f"{departure} to {destination} (unpaid) - {miles}")
-            c.drawString(280, y, reason)
-            c.drawString(410, y, f"{miles}")
+            c.drawString(40, y, formatted_date)
+            c.drawString(80, y, formatted_time)
+            c.drawString(130, y, f"{departure} to {destination} (unpaid) - {miles}")
+            c.drawString(240, y, reason)
+            c.drawString(330, y, f"{miles}")
             c.drawString(750, y, f"{timestamp.hour} - {timestamp.hour + 1}")
         y -= 20  # Increase the gap between rows
 
     # Calculate and write reimbursement information
     total_reimbursement_str = f"Total reimbursement amount: ${total_reimbursement:.2f}"
-    c.drawString(60, y - 30, f"Total miles paid at: $0.67")
-    c.drawString(60, y - 40, f"Total miles traveled this month: {total_miles}")
-    c.drawString(60, y - 50, total_reimbursement_str)
+    c.drawString(40, y - 30, f"Total miles paid at: $0.67")
+    c.drawString(40, y - 40, f"Total miles traveled this month: {total_miles}")
+    c.drawString(40, y - 50, total_reimbursement_str)
+
+    # Print the statement of benefits
+    if statement:
+        # Get existing statement if available
+        existing_statement = ""
+        try:
+            with open("statement_of_benefits.txt", "r") as file:
+                existing_statement = file.read()
+        except FileNotFoundError:
+            pass
+
+        # Append new statement to existing one
+        combined_statement = existing_statement + ": " + reason + "-" + statement
+
+        # Write the combined statement to PDF
+        c.drawString(40, y - 60, f"Statement of Benefits to the State: {combined_statement}")
+
+        # Save the combined statement to file
+        with open("statement_of_benefits.txt", "w") as file:
+            file.write(combined_statement)
 
     # Add images at the end of the report for unique city pairs
     added_city_pairs = set()  # Maintain a set to track added city pairs
@@ -443,7 +552,7 @@ def generate_pdf_report():
         # Check if the city pair or its reverse has already been added to avoid duplicates
         if city_pair not in added_city_pairs:
             path = f"Maps/{start}to{end}.png"
-            c.drawImage(path, 30, 650 - (idx * 100), width=550, height=180)
+            c.drawImage(path, 30, 700 - (idx * 150), width=550, height=180)
             added_city_pairs.add(city_pair)  # Add the city pair to the set of added city pairs
 
     c.save()
@@ -467,11 +576,21 @@ def submit_form():
     if miles != 0:
         reason_choice = reason_var.get()
         if reason_choice == 6:  # 'Other' was selected
-            custom_reason = custom_reason_entry.get()  # Get the custom reason text
-            record_trip(departure, destination, miles, reason_choice, custom_reason)
+            custom_reason = custom_reason_entry.get()
+            # Prompt the user for the statement of benefits
+            statement = simpledialog.askstring("Statement of Benefits",
+                                               "Please provide a statement of benefits to the state:")
+            if statement is not None:  # Check if a statement is provided
+                # Record the trip with both purpose/reason and statement of benefits
+                record_trip(departure, destination, miles, reason_choice, custom_reason, statement)
+                messagebox.showinfo("Success", f"Recorded {miles} miles for {departure} to {destination}")
+                generate_pdf_report(statement)  # Pass the statement to generate PDF report
+            else:
+                messagebox.showinfo("Information", "Trip recording canceled.")  # Notify user of cancellation
         else:
+            # For other reasons, directly record the trip without requiring a statement
             record_trip(departure, destination, miles, reason_choice, "")
-        messagebox.showinfo("Success", f"Recorded {miles} miles for {departure} to {destination}")
+            messagebox.showinfo("Success", f"Recorded {miles} miles for {departure} to {destination}")
     else:
         messagebox.showerror("Error", "Invalid cities entered or route not available.")
 
