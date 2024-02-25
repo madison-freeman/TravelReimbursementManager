@@ -367,50 +367,6 @@ def record_trip(departure, destination, miles, reason, custom_reason="", stateme
     # Save program state after each trip recording
     save_program_state()
 
-def generate_report(statement=""):
-    current_month = datetime.now().strftime("%Y-%m")
-    filename = f"{logged_in_user}_travel_report_{current_month}.pdf"
-    c = canvas.Canvas(filename, pagesize=letter)
-
-    # Add the government seal image
-    c.drawImage("2ndJudC_logo.jpg", 30, 650, width=100, height=100)
-
-    # Add text for reimbursement request
-    c.setFont("Courier", 16)
-    c.drawString(150, 700, "Wakulla County Voucher for Reimbursement")
-    c.drawString(150, 670, "of Travel Expenses")
-
-    # Write trips and mileage information
-    c.setFont("Courier", 12)
-    y = 580
-    for trip in trips:
-        timestamp, departure, destination, miles, reason = trip
-        formatted_time = timestamp.strftime("%I:%M %p")  # Format timestamp to show 12-hour clock with AM/PM
-        if miles != 20:  # Check if the trip isn't Tallahassee to Crawfordville
-            c.drawString(100, y, f"{formatted_time}: {departure} to {destination} - {miles} miles")
-            c.drawString(100, y - 15, f"Reason: {reason}")  # Place reason below trip details
-        else:
-            c.drawString(100, y, f"{formatted_time}: {departure} to {destination} (unpaid) - {miles}")
-            c.drawString(100, y - 15, f"Reason: {reason}")  # Place reason below trip details
-        y -= 40 # increase the gap between trips
-
-    # Calculate and write reimbursement information
-    total_reimbursement_str = f"Total reimbursement amount: ${total_reimbursement:.2f}"
-    c.drawString(100, y - 30, f"Total miles traveled this month: {total_miles}")
-    c.drawString(100, y - 50, total_reimbursement_str)
-
-    # Print the statement of benefits
-    if statement:
-        c.drawString(100, y - 60, f"Statement of Benefits to the State: {statement}")
-
-    # Add images at the end of the report for unique city pairs
-    c.showPage()  # Add a new page
-    for idx, (start, end) in enumerate(unique_city_pairs, start=1):
-        path = f"Maps/{start}to{end}.png"
-        c.drawImage(path, 30, 700 - (idx * 150), width=550, height=180)
-
-    c.save()
-
 def generate_pdf_report(statement=""):
     # Load the entire history of trips from Madison_program_state.json
     try:
@@ -637,69 +593,6 @@ generate_report_button.pack()
 
 # Start the GUI main loop
 root.mainloop()
-
-# Sample usage and data collection
-while True:
-    username = logged_in_user # Use the logged_in_user variable for recording trips
-
-    print("Available cities: Tallahassee, Crawfordville, Quincy, Apalachicola, Bristol")
-    departure = input("Enter departure city: ")
-    destination = input("Enter destination city: ")
-
-    if (departure, destination) in mileage_data:
-        miles = mileage_data[(departure, destination)]
-        if miles != 20:  # Exclude Tallahassee to Crawfordville
-            print("Select the reason for travel:")
-            for num, reason in reasons.items():
-                print(f"{num}: {reason}")
-            reason_choice = int(input("Enter the corresponding number for the reason: "))
-            record_trip(departure, destination, miles, reason_choice)
-            print(f"Recorded {miles} miles for {departure} to {destination}")
-        else:
-            print("Excluded miles between Tallahassee and Crawfordville.")
-    else:
-        print("Invalid cities entered or route not available.")
-
-    more_trips = input("Do you have more trips today? (y/n): ")
-    if more_trips.lower() != 'y':
-        break
-
-# Flag to indicate if the month's data collection is complete
-data_collection_complete = False
-
-while not data_collection_complete:
-    print("Available cities: Tallahassee, Crawfordville, Quincy, Apalachicola, Bristol")
-    departure = input("Enter departure city (or 'end' to finish for today): ")
-
-    # Check if the user wants to end data collection for the month
-    if departure.lower() == 'end':
-        more_days = input("Do you have more trips this month? (y/n): ")
-        if more_days.lower() != 'y':
-            data_collection_complete = True
-        continue
-
-    destination = input("Enter destination city: ")
-
-    if (departure, destination) in mileage_data:
-        miles = mileage_data[(departure, destination)]
-        if miles != 20:  # Exclude Tallahassee to Crawfordville
-            print("Select the reason for travel:")
-            for num, reason in reasons.items():
-                print(f"{num}: {reason}")
-            reason_choice = int(input("Enter the corresponding number for the reason: "))
-            record_trip(departure, destination, miles, reason_choice)
-            print(f"Recorded {miles} miles for {departure} to {destination}")
-        else:
-            print("Excluded miles between Tallahassee and Crawfordville.")
-    else:
-        print("Invalid cities entered or route not available.")
-
-total_reimbursement = calculate_reimbursement(total_miles)
-
-print(f"Total miles traveled this month: {total_miles}")
-print(f"Total miles paid at: $0.67")
-
-print(f"Total reimbursement amount: ${total_reimbursement:.2f}")
 
 generate_pdf_report()  # Generate PDF report with all recorded trips
 exit()
