@@ -594,5 +594,4 @@ generate_report_button.pack()
 # Start the GUI main loop
 root.mainloop()
 
-generate_pdf_report()  # Generate PDF report with all recorded trips
 exit()
