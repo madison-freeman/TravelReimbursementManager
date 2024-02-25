@@ -533,14 +533,19 @@ def generate_pdf_report(statement=""):
             pass
 
         # Append new statement to existing one
-        combined_statement = existing_statement + ": " + reason + "-" + statement
-
-        # Write the combined statement to PDF
-        c.drawString(40, y - 60, f"Statement of Benefits to the State: {combined_statement}")
+        combined_statement = existing_statement + reason + "-" + statement + "; "
 
         # Save the combined statement to file
         with open("statement_of_benefits.txt", "w") as file:
             file.write(combined_statement)
+
+    # Add content from statement_of_benefits.txt if available
+    try:
+        with open("statement_of_benefits.txt", "r") as file:
+            statement_content = file.read()
+            c.drawString(40, y - 60, f"Statement of Benefits: {statement_content}")
+    except FileNotFoundError:
+        pass
 
     # Add images at the end of the report for unique city pairs
     added_city_pairs = set()  # Maintain a set to track added city pairs
